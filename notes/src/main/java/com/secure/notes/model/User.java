@@ -60,15 +60,15 @@ public class User{
 
     @ManyToOne(fetch = FetchType.EAGER, cascade = {CascadeType.MERGE})
     @JoinColumn(name = "role_id", referencedColumnName = "role_id")
-    @JsonBackReference
+    @JsonBackReference  //Prevents infinite recursion.Without this:User → Role → Users → Role → Users Infinite loop during JSON conversion.
     @ToString.Exclude
     private Role role;
 
-    @CreationTimestamp
-    @Column(updatable = false)
+    @CreationTimestamp  //Automatically stores the date & time when the record is created.
+    @Column(updatable = false) //createdDate can never be modified later
     private LocalDateTime createdDate;
 
-    @UpdateTimestamp
+    @UpdateTimestamp  //Automatically updates whenever record changes.
     private LocalDateTime updatedDate;
 
     public User(String userName, String email, String password) {
