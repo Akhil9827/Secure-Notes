@@ -48,7 +48,7 @@ import java.util.Objects;
                     user.getEmail(),
                     user.getPassword(),
                     user.isTwoFactorEnabled(),
-                    List.of(authority) // Wrapping the single authority in a list
+                    List.of(authority) // Wrapping the single authority in a list Because UserDetails expects:Collection<? extends GrantedAuthority>NOT single object.
             );
         }
 
