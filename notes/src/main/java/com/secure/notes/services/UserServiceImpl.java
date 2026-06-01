@@ -9,6 +9,7 @@ import com.secure.notes.repository.RoleRepository;
 import com.secure.notes.repository.UserRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -39,6 +40,7 @@ public class UserServiceImpl implements UserService {
     }
 
 
+    //@PreAuthorize("hasRole('ADMIN')")
     @Override
     public List<User> getAllUsers() {
         return userRepository.findAll();

@@ -1,8 +1,11 @@
 package com.secure.notes.services;
 
+import com.secure.notes.exception.APIException;
 import com.secure.notes.exception.ResourceNotFoundException;
 import com.secure.notes.model.Note;
+import com.secure.notes.model.User;
 import com.secure.notes.repository.NoteRepository;
+import com.secure.notes.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -14,19 +17,27 @@ public class NoteserviceImpl implements NoteService{
     @Autowired
     private NoteRepository noteRepository;
 
+    @Autowired
+    private UserRepository userRepository;
+
 
     @Override
     public Note createNoteForUser(String username, String content) {
+
+        User user = userRepository
+                .findByUserName(username)
+                .orElseThrow(() -> new APIException("User not found"));
+
         Note note=new Note();
         note.setContent(content);
-        note.setOwnerUsername(username);
+        note.setUser(user);
         Note savedNote=noteRepository.save(note);
         return savedNote;
     }
 
     @Override
     public List<Note> getNotesForUser(String username) {
-        List<Note> personalNotes=noteRepository.findByOwnerUsername(username);
+        List<Note> personalNotes=noteRepository.findByUserUserName(username);
         return personalNotes;
     }
 

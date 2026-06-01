@@ -6,23 +6,28 @@ import com.secure.notes.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
     @RequestMapping("/api/admin")
+//@PreAuthorize("hasRole('ADMIN')")
     public class AdminController {
 
         @Autowired
         private UserService userService;
 
+        @PreAuthorize("hasRole('ADMIN')")
         @GetMapping("/getusers")
         public ResponseEntity<List<User>> getAllUsers() {
             List<User> users=userService.getAllUsers();
             return new ResponseEntity<>(users,HttpStatus.OK);
         }
 
+
+        @PreAuthorize("hasRole('ADMIN')")
         @PutMapping("/update-role")
         public ResponseEntity<String> updateUserRole(@RequestParam Long userId,
                                                      @RequestParam String roleName) {
@@ -30,6 +35,8 @@ import java.util.List;
             return new ResponseEntity<>(message,HttpStatus.OK);
         }
 
+
+        @PreAuthorize("hasRole('ADMIN')")
         @GetMapping("/user/{id}")
         public ResponseEntity<UserDTO> getUser(@PathVariable Long id) {
             UserDTO userDTO=userService.getUserById(id);

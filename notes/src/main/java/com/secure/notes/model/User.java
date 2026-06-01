@@ -15,6 +15,8 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Data
@@ -63,6 +65,12 @@ public class User{
     @JsonBackReference  //Prevents infinite recursion.Without this:User → Role → Users → Role → Users Infinite loop during JSON conversion.
     @ToString.Exclude
     private Role role;
+
+    @OneToMany(mappedBy = "user",
+            cascade = CascadeType.ALL,
+            fetch = FetchType.LAZY)
+    @JsonIgnore
+    private List<Note> notes = new ArrayList<>();
 
     @CreationTimestamp  //Automatically stores the date & time when the record is created.
     @Column(updatable = false) //createdDate can never be modified later

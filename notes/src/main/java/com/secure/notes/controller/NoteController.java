@@ -25,14 +25,14 @@ public class NoteController {
                                            @AuthenticationPrincipal UserDetails userDetails) {  //
         String username = userDetails.getUsername();
         Note savedNote = noteService.createNoteForUser(username, content);
-        return ResponseEntity.status(HttpStatus.CREATED).body(savedNote);
+        return new ResponseEntity<>(savedNote,HttpStatus.CREATED);
     }
 
     @GetMapping()
     public ResponseEntity<List<Note>> getUserNotes(@AuthenticationPrincipal UserDetails userDetails) {
         String username = userDetails.getUsername();
         List<Note> allNotes = noteService.getNotesForUser(username);
-        return ResponseEntity.status(HttpStatus.OK).body(allNotes);
+        return new ResponseEntity<>(allNotes,HttpStatus.OK);
     }
 
     @PutMapping("/{noteId}")
@@ -41,13 +41,13 @@ public class NoteController {
                                            @AuthenticationPrincipal UserDetails userDetails){
         String userName=userDetails.getUsername();
         Note updatedNote=noteService.updateNoteForUser(noteId,content,userName);
-        return ResponseEntity.status(HttpStatus.OK).body(updatedNote);
+        return new ResponseEntity<>(updatedNote,HttpStatus.OK);
     }
 
     @DeleteMapping("/{noteId}")
     public ResponseEntity<Note> deleteNote(@PathVariable Long noteId,@AuthenticationPrincipal UserDetails userDetails){
         String userName=userDetails.getUsername();
         Note deletedNote=noteService.deleteNoteForUser(noteId,userName);
-        return ResponseEntity.status(HttpStatus.OK).body(deletedNote);
+        return new ResponseEntity<>(deletedNote,HttpStatus.CREATED);
     }
 }
