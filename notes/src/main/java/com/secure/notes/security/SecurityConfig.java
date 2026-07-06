@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -49,17 +50,20 @@ public class SecurityConfig {
                 .sessionManagement(session
                         -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        //.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/public/**").permitAll()
+                        .requestMatchers("/api/csrf-token").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/auth/public/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(exception->exception.authenticationEntryPoint(unauthorizedHandler))
-//                .csrf(csrf->
-//                        csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()))
+                //.csrf(csrf->
+                       // csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()))
+               .cors(Customizer.withDefaults())
                 .csrf(csrf -> csrf.disable())
-                .addFilterBefore(authTokenFilter, UsernamePasswordAuthenticationFilter.class)
-                .httpBasic(Customizer.withDefaults());
+                .addFilterBefore(authTokenFilter, UsernamePasswordAuthenticationFilter.class);
+                //httpBasic(Customizer.withDefaults());
 
         return http.build();
     }

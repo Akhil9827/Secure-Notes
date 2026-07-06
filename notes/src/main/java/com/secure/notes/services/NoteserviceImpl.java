@@ -20,6 +20,9 @@ public class NoteserviceImpl implements NoteService{
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+   private AuditLogService auditLogService;
+
 
     @Override
     public Note createNoteForUser(String username, String content) {
@@ -32,6 +35,7 @@ public class NoteserviceImpl implements NoteService{
         note.setContent(content);
         note.setUser(user);
         Note savedNote=noteRepository.save(note);
+        auditLogService.logNoteCreation(username,note);
         return savedNote;
     }
 
@@ -42,18 +46,20 @@ public class NoteserviceImpl implements NoteService{
     }
 
     @Override
-    public Note updateNoteForUser(Long noteId, String content, String userName) {
+    public Note updateNoteForUser(Long noteId, String content, String username) {
         Note note=noteRepository.findById(noteId)
                 .orElseThrow(()-> new ResourceNotFoundException("Note with noteId " + noteId + "not available"));
         note.setContent(content);
         Note updatedNote=noteRepository.save(note);
+        auditLogService.logNoteUpdate(username,note);
         return updatedNote;
     }
 
     @Override
-    public Note deleteNoteForUser(Long noteId, String userName) {
+    public Note deleteNoteForUser(Long noteId, String username) {
         Note note=noteRepository.findById(noteId)
                 .orElseThrow(()-> new ResourceNotFoundException("Note with NoteId " + noteId + "not available"));
+        auditLogService.logNoteDeletion(username,noteId);
          noteRepository.delete(note);
          return note;
     }

@@ -161,7 +161,8 @@ public class AuthController {
         );
 
         return ResponseEntity.ok().body(response);
-    }@GetMapping("/username")     //This Api is used to get current loggedin users name its useful if we are showing it in frontend while the user logged in like Welcome Akhilesh or to display the name on profile icon
+    }
+    @GetMapping("/username")     //This Api is used to get current loggedin users name its useful if we are showing it in frontend while the user logged in like Welcome Akhilesh or to display the name on profile icon
     public String currentUserName(Authentication authentication){  //Spring Security automatically injecting it from SecurityContextHolder
         if(authentication!=null){
             return authentication.getName();
