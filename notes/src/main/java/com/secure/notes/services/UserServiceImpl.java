@@ -10,6 +10,7 @@ import com.secure.notes.repository.UserRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -26,6 +27,9 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private ModelMapper modelMapper;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @Override
     public String updateUserRole(Long userId, String roleName) {
@@ -62,6 +66,54 @@ public class UserServiceImpl implements UserService {
                 return user;
     }
 
+    @Override
+    public void updateAccountLockStatus(Long userId, boolean lock) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new APIException("User not found with user id " + userId ));
+        user.setAccountNonLocked(!lock);
+        userRepository.save(user);
+    }
+
+    @Override
+    public List<Role> getAllRoles() {
+        return roleRepository.findAll();
+    }
+
+    @Override
+    public void updateAccountExpiryStatus(Long userId, boolean expire) {
+        User user=userRepository.findById(userId)
+                .orElseThrow(()-> new APIException("user not found with userid " + userId));
+        user.setAccountNonExpired(!expire);
+        userRepository.save(user);
+    }
+
+    @Override
+    public void updateAccountEnabledStatus(Long userId, boolean enabled) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new APIException("User not found with userid " + userId));
+        user.setEnabled(enabled);
+        userRepository.save(user);
+    }
+
+    @Override
+    public void updateCredentialsExpiryStatus(Long userId, boolean expire) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new APIException("User not found with userid" + userId));
+        user.setCredentialsNonExpired(!expire);
+        userRepository.save(user);
+    }
+
+    @Override
+    public void updatePassword(Long userId, String password) {
+        try {
+            User user = userRepository.findById(userId)
+                    .orElseThrow(() -> new APIException("User not found"));
+            user.setPassword(passwordEncoder.encode(password));
+            userRepository.save(user);
+        } catch (Exception e) {
+            throw new APIException("Failed to update password");
+        }
+    }
 
 }
 
