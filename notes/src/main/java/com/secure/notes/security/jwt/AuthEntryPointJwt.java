@@ -35,8 +35,8 @@ import java.util.Map;
             body.put("message", authException.getMessage());
             body.put("path", request.getServletPath());
 
-            final ObjectMapper mapper = new ObjectMapper();
-            mapper.writeValue(response.getOutputStream(), body);
+            final ObjectMapper mapper = new ObjectMapper();   //ObjectMapper converts Java objects into JSON(used jackson)
+            mapper.writeValue(response.getOutputStream(), body);//Here we are converting map to json because map is a java object
         }
 
     }

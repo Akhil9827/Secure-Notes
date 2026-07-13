@@ -163,17 +163,38 @@ public class AuthController {
         return ResponseEntity.ok().body(response);
     }
     @GetMapping("/username")     //This Api is used to get current loggedin users name its useful if we are showing it in frontend while the user logged in like Welcome Akhilesh or to display the name on profile icon
-    public String currentUserName(Authentication authentication){  //Spring Security automatically injecting it from SecurityContextHolder
-        if(authentication!=null){
+    public String currentUserName(Authentication authentication) {  //Spring Security automatically injecting it from SecurityContextHolder
+        if (authentication != null) {
             return authentication.getName();
-        }
-        else {
+        } else {
             return "Null//Not logged in";
         }
     }
 
+    @PostMapping("/public/forgot-password")
+    public ResponseEntity<?> forgotPassword(@RequestParam String email){
+        try {
+            userService.generatePasswordResetToken(email);
+            return ResponseEntity.status(HttpStatus.OK)
+                    .body(new MessageResponse("Password reset email sent"));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new MessageResponse("Error sending password reset email"));
 
+        }
+    }
 
+    @PostMapping("/public/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestParam String token,
+                                           @RequestParam String newPassword){
+        try {
+            userService.resetPassword(token, newPassword);
+            return ResponseEntity.status(HttpStatus.CREATED).body(new MessageResponse("password reset successful"));
+        } catch (RuntimeException e){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new MessageResponse(e.getMessage()));
+        }
 
+    }
 
 }

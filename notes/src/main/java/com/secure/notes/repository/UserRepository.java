@@ -17,6 +17,8 @@ import java.util.Optional;
 
 
         Boolean existsByEmail(String email);
+
+    Optional<User> findByEmail(String email);
 }
 
 
