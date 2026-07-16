@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -69,21 +70,21 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDTO getUserById(Long id) {
         User user = userRepository.findById(id)
-                .orElseThrow(()-> new APIException("User not found with userid " + id));
-       return modelMapper.map(user,UserDTO.class);
+                .orElseThrow(() -> new APIException("User not found with userid " + id));
+        return modelMapper.map(user, UserDTO.class);
     }
 
     @Override
     public User findByUsername(String username) {
-       User user = userRepository.findByUserName(username)
+        User user = userRepository.findByUserName(username)
                 .orElseThrow(() -> new APIException("User not found with username: " + username));
-                return user;
+        return user;
     }
 
     @Override
     public void updateAccountLockStatus(Long userId, boolean lock) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new APIException("User not found with user id " + userId ));
+                .orElseThrow(() -> new APIException("User not found with user id " + userId));
         user.setAccountNonLocked(!lock);
         userRepository.save(user);
     }
@@ -95,8 +96,8 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void updateAccountExpiryStatus(Long userId, boolean expire) {
-        User user=userRepository.findById(userId)
-                .orElseThrow(()-> new APIException("user not found with userid " + userId));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new APIException("user not found with userid " + userId));
         user.setAccountNonExpired(!expire);
         userRepository.save(user);
     }
@@ -130,17 +131,17 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void generatePasswordResetToken(String email){
-        User user=userRepository.findByEmail(email)
-                .orElseThrow(()-> new APIException("User not found with " + email));
+    public void generatePasswordResetToken(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new APIException("User not found with " + email));
 
-        String token= UUID.randomUUID().toString();
-        Instant expiryDate= Instant.now().plus(24, ChronoUnit.HOURS);
-        PasswordResetToken passwordResetToken=new PasswordResetToken(token, expiryDate, user);
+        String token = UUID.randomUUID().toString();
+        Instant expiryDate = Instant.now().plus(24, ChronoUnit.HOURS);
+        PasswordResetToken passwordResetToken = new PasswordResetToken(token, expiryDate, user);
 
         passwordResetTokenRepository.save(passwordResetToken);
 
-        String resetUrl= frontendUrl + "/reset-password?token=" + token;
+        String resetUrl = frontendUrl + "/reset-password?token=" + token;
 
         //Send email to user
         emailService.sendPasswordResetEmail(user.getEmail(), resetUrl);
@@ -149,22 +150,36 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void resetPassword(String token, String newPassword) {
-        PasswordResetToken passwordResetToken=passwordResetTokenRepository.findByToken(token)
-                .orElseThrow(()-> new APIException("Invalid password reset token"));
-        if(passwordResetToken.isUsed()){
+        PasswordResetToken passwordResetToken = passwordResetTokenRepository.findByToken(token)
+                .orElseThrow(() -> new APIException("Invalid password reset token"));
+        if (passwordResetToken.isUsed()) {
             throw new APIException("Password reset token has already been used");
         }
 
-        if(passwordResetToken.getExpiryDate().isBefore(Instant.now())){
+        if (passwordResetToken.getExpiryDate().isBefore(Instant.now())) {
             throw new APIException("Password reset token has expired");
         }
-        User user=passwordResetToken.getUser();
+        User user = passwordResetToken.getUser();
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
 
         passwordResetToken.setUsed(true);
         passwordResetTokenRepository.save(passwordResetToken);
 
+    }
+
+    @Override
+    public Optional<User> findByEmail(String email) {
+        Optional<User> user = userRepository.findByEmail(email);
+        return user;
+    }
+
+    @Override
+    public User registerUser(User user) {
+        if (user.getPassword() != null) {
+            user.setPassword(passwordEncoder.encode(user.getPassword()));
+        }
+        return userRepository.save(user);
     }
 
 }

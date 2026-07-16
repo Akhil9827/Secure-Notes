@@ -17,6 +17,7 @@ import org.springframework.stereotype.Component;
 import javax.crypto.SecretKey;
 import java.security.Key;
 import java.util.Date;
+import java.util.stream.Collectors;
 
 @Component
     public class JwtUtils {
@@ -39,8 +40,13 @@ import java.util.Date;
 
         public String generateTokenFromUsername(UserDetails userDetails) {
             String username = userDetails.getUsername();
+            String roles=userDetails.getAuthorities().stream()
+                    .map(authority -> authority.getAuthority())
+                    .collect(Collectors.joining(","));
+
             return Jwts.builder()
                     .subject(username)
+                    .claim("roles",roles)
                     .issuedAt(new Date())
                     .expiration(new Date((new Date()).getTime() + jwtExpirationMs))
                     .signWith(key())
@@ -61,7 +67,9 @@ import java.util.Date;
         public boolean validateJwtToken(String authToken) {
             try {
                 System.out.println("Validate");
-                Jwts.parser().verifyWith((SecretKey) key()).build().parseSignedClaims(authToken);
+                Jwts.parser()
+                        .verifyWith((SecretKey) key())
+                        .build().parseSignedClaims(authToken);
                 return true;
             } catch (MalformedJwtException e) {
                 logger.error("Invalid JWT token: {}", e.getMessage());
