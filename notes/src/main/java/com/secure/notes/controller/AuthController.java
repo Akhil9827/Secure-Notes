@@ -190,9 +190,11 @@ public class AuthController {
                                            @RequestParam String newPassword){
         try {
             userService.resetPassword(token, newPassword);
-            return ResponseEntity.status(HttpStatus.CREATED).body(new MessageResponse("password reset successful"));
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(new MessageResponse("password reset successful"));
         } catch (RuntimeException e){
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new MessageResponse(e.getMessage()));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new MessageResponse(e.getMessage()));
         }
 
     }
