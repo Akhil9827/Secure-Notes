@@ -3,6 +3,7 @@ package com.secure.notes.services;
 import com.secure.notes.model.Role;
 import com.secure.notes.model.User;
 import com.secure.notes.payload.UserDTO;
+import com.warrenstrange.googleauth.GoogleAuthenticatorKey;
 
 import java.util.List;
 import java.util.Optional;
@@ -35,5 +36,13 @@ public interface UserService {
     Optional<User> findByEmail(String email);
 
     User registerUser(User user);
+
+    GoogleAuthenticatorKey generate2FASecret(Long userId);
+
+    boolean validate2FACode(Long userId, int code);
+
+    void enable2FA(Long userId);
+
+    void disable2FA(Long userId);
 }
 
