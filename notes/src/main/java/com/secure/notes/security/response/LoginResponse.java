@@ -1,12 +1,16 @@
 package com.secure.notes.security.response;
-
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.List;
 
+@Getter
+@Setter
 public class LoginResponse {
 
         private Long id;
         private String jwtToken;
+        private String refreshToken;
 
         private String username;
         private List<String> roles;
@@ -19,44 +23,14 @@ public class LoginResponse {
 
         }
 
-    public LoginResponse(String username, List<String> roles, String jwtToken) {
+    public LoginResponse(Long id,String username, List<String> roles, String jwtToken,String refreshToken) {
+            this.id=id;
         this.username = username;
         this.roles = roles;
         this.jwtToken = jwtToken;
+        this.refreshToken=refreshToken;
 
     }
-
-        public Long getId(){
-            return id;
-        }
-
-        public void setId(Long id){
-            this.id=id;
-        }
-
-        public String getJwtToken() {
-            return jwtToken;
-        }
-
-        public void setJwtToken(String jwtToken) {
-            this.jwtToken = jwtToken;
-        }
-
-        public String getUsername() {
-            return username;
-        }
-
-        public void setUsername(String username) {
-            this.username = username;
-        }
-
-        public List<String> getRoles() {
-            return roles;
-        }
-
-        public void setRoles(List<String> roles) {
-            this.roles = roles;
-        }
     }
 
 

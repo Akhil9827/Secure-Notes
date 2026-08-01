@@ -1,6 +1,7 @@
 package com.secure.notes.security.jwt;
 
 
+import com.secure.notes.security.service.UserDetailsImpl;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.MalformedJwtException;
@@ -23,7 +24,11 @@ import java.util.stream.Collectors;
     public class JwtUtils {
         private static final Logger logger = LoggerFactory.getLogger(JwtUtils.class);
 
-        @Value("${spring.app.jwtSecret}")
+    private static final String ACCESS_TOKEN = "ACCESS";
+    private static final String TEMP_2FA_TOKEN = "TEMP_2FA";
+
+
+    @Value("${spring.app.jwtSecret}")
         private String jwtSecret;
 
         @Value("${spring.app.jwtExpirationMs}")
@@ -38,7 +43,9 @@ import java.util.stream.Collectors;
             return null;
         }
 
-        public String generateTokenFromUsername(UserDetails userDetails) {
+
+        // Final Access JWT
+        public String generateTokenFromUsername(UserDetailsImpl userDetails) {
             String username = userDetails.getUsername();
             String roles=userDetails.getAuthorities().stream()
                     .map(authority -> authority.getAuthority())
@@ -47,10 +54,24 @@ import java.util.stream.Collectors;
             return Jwts.builder()
                     .subject(username)
                     .claim("roles",roles)
+                    .claim("tokenType", ACCESS_TOKEN)
                     .issuedAt(new Date())
                     .expiration(new Date((new Date()).getTime() + jwtExpirationMs))
                     .signWith(key())
                     .compact();
+        }
+
+
+        // Temporary JWT used only before OTP verification
+        public String generateTempToken(String username) {
+
+            return Jwts.builder()
+                .subject(username)
+                .claim("tokenType", TEMP_2FA_TOKEN)
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + (2 * 60 * 1000))) // 2 minutes
+                .signWith(key())
+                .compact();
         }
 
         public String getUserNameFromJwtToken(String token) {
@@ -58,6 +79,16 @@ import java.util.stream.Collectors;
                     .verifyWith((SecretKey) key())
                     .build().parseSignedClaims(token)
                     .getPayload().getSubject();
+        }
+
+        public String getTokenType(String token) {
+
+            return Jwts.parser()
+                .verifyWith((SecretKey) key())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload()
+                .get("tokenType", String.class);
         }
 
         private Key key() {

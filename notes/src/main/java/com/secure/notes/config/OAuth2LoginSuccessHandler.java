@@ -3,12 +3,16 @@ package com.secure.notes.config;
 
 import com.secure.notes.exception.APIException;
 import com.secure.notes.model.AppRole;
+import com.secure.notes.model.RefreshToken;
 import com.secure.notes.model.Role;
 import com.secure.notes.model.User;
 import com.secure.notes.repository.RoleRepository;
+import com.secure.notes.repository.UserRepository;
+import com.secure.notes.security.jwt.CookieUtils;
 import com.secure.notes.security.jwt.JwtUtils;
 import com.secure.notes.security.service.UserDetailsImpl;
 import com.secure.notes.security.service.UserDetailsServiceImpl;
+import com.secure.notes.services.RefreshTokenService;
 import com.secure.notes.services.UserService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -16,6 +20,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -26,6 +32,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
+import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -45,8 +52,17 @@ public class OAuth2LoginSuccessHandler extends SavedRequestAwareAuthenticationSu
     @Autowired
     private UserDetailsServiceImpl userDetailsService;
 
+    @Autowired
+    private RefreshTokenService refreshTokenService;
+
+    @Autowired
+    private CookieUtils cookieUtils;
+
     @Value("${frontend.url}")
     private String frontendUrl;
+
+    @Autowired
+    private UserRepository userRepository;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws ServletException, IOException {
@@ -164,6 +180,27 @@ public class OAuth2LoginSuccessHandler extends SavedRequestAwareAuthenticationSu
             User user = userService.findByEmail(email)
                     .orElseThrow(() -> new APIException("User not found"));
 
+            //if 2fa enabled
+            if (user.isTwoFactorEnabled()) {
+
+                UserDetailsImpl userDetails =
+                        (UserDetailsImpl) userDetailsService.loadUserByUsername(user.getUserName());
+
+                String tempToken = jwtUtils.generateTempToken(user.getUserName());
+
+                ResponseCookie tempTokenCookie =
+                        cookieUtils.createTempTokenCookie(tempToken);
+
+                response.addHeader(HttpHeaders.SET_COOKIE, tempTokenCookie.toString());
+
+                response.sendRedirect(frontendUrl + "/login?oauth2=true");
+                return;
+            }
+
+            //if 2fa disabled continue normally
+            user.setLastLogin(Instant.now());
+            userRepository.save(user);
+
 // Load your application's UserDetails
             UserDetailsImpl userDetails =
                     (UserDetailsImpl) userDetailsService.loadUserByUsername(user.getUserName());
@@ -179,9 +216,21 @@ public class OAuth2LoginSuccessHandler extends SavedRequestAwareAuthenticationSu
 // Generate JWT
             String jwtToken = jwtUtils.generateTokenFromUsername(userDetails);
 
+            RefreshToken refreshToken =
+                    refreshTokenService.createRefreshToken(user.getUserId());
+
+            ResponseCookie accessTokenCookie = cookieUtils.createAccessTokenCookie(jwtToken);
+
+            ResponseCookie refreshTokenCookie = cookieUtils.createRefreshTokenCookie(refreshToken.getToken());
+
+            // Send cookies to browser
+            response.addHeader(HttpHeaders.SET_COOKIE, accessTokenCookie.toString());
+            response.addHeader(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString());
+
+
 // Redirect
-            String targetUrl = UriComponentsBuilder.fromUriString(frontendUrl + "/oauth2/redirect")
-                    .queryParam("token", jwtToken)
+            String targetUrl = UriComponentsBuilder
+                    .fromUriString(frontendUrl + "/oauth2/redirect")
                     .build()
                     .toUriString();
 

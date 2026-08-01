@@ -13,6 +13,7 @@ import lombok.ToString;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -78,6 +79,8 @@ public class User{
 
     @UpdateTimestamp  //Automatically updates whenever record changes.
     private LocalDateTime updatedDate;
+
+    private Instant lastLogin;
 
     public User(String userName, String email, String password) {
         this.userName = userName;

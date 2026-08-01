@@ -10,6 +10,7 @@ import com.secure.notes.repository.PasswordResetTokenRepository;
 import com.secure.notes.repository.RoleRepository;
 import com.secure.notes.repository.UserRepository;
 import com.secure.notes.util.EmailService;
+import com.warrenstrange.googleauth.GoogleAuthenticatorKey;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -45,6 +46,9 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private EmailService emailService;
+
+    @Autowired
+    private TotpService totpService;
 
     @Override
     public String updateUserRole(Long userId, String roleName) {
@@ -180,6 +184,39 @@ public class UserServiceImpl implements UserService {
             user.setPassword(passwordEncoder.encode(user.getPassword()));
         }
         return userRepository.save(user);
+    }
+
+    @Override
+    public GoogleAuthenticatorKey generate2FASecret(Long userId){
+        User user=userRepository.findById(userId)
+                .orElseThrow(()-> new APIException("User not found with user id" + userId));
+        GoogleAuthenticatorKey key=totpService.generateSecret();
+        user.setTwoFactorSecret(key.getKey());  //key.getKey() extracts only the secret string from the key object beacuse in db we need to store only the secretkey string not whole GoogleAuthenticator Key object
+        userRepository.save(user);
+        return key;  //you return the entire GoogleAuthenticatorKey because the next step is usually: to generate the qr that requires the key object
+    }
+
+    @Override
+    public boolean validate2FACode(Long userId, int code){
+        User user=userRepository.findById(userId)
+                .orElseThrow(()-> new APIException("User not found with userId " + userId));
+        return totpService.verifyCode(user.getTwoFactorSecret(), code);
+    }
+
+    @Override
+    public void enable2FA(Long userId){
+        User user=userRepository.findById(userId)
+                .orElseThrow(()-> new APIException("User not found with userId " + userId));
+        user.setTwoFactorEnabled(true);
+        userRepository.save(user);
+    }
+
+    @Override
+    public void disable2FA(Long userId){
+        User user=userRepository.findById(userId)
+                .orElseThrow(()-> new APIException("User not found with userid " + userId));
+        user.setTwoFactorEnabled(false);
+        userRepository.save(user);
     }
 
 }
