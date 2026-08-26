@@ -26,6 +26,9 @@ import java.io.IOException;
         @Autowired
         private UserDetailsServiceImpl userDetailsService;
 
+        @Autowired
+        private CookieUtils cookieUtils;
+
         private static final Logger logger = LoggerFactory.getLogger(AuthTokenFilter.class);
 
         @Override
@@ -35,6 +38,16 @@ import java.io.IOException;
             try {
                 String jwt = parseJwt(request);
                 if (jwt != null && jwtUtils.validateJwtToken(jwt)) {
+
+                    //Get the token type & check if its not access token exit from the method return will do that
+                    String tokenType = jwtUtils.getTokenType(jwt);
+
+                    if (!"ACCESS".equals(tokenType)) {
+                        logger.debug("Ignoring TEMP token");
+                        filterChain.doFilter(request, response);
+                        return;
+                    }
+
                     String username = jwtUtils.getUserNameFromJwtToken(jwt);
 
                     UserDetails userDetails = userDetailsService.loadUserByUsername(username);
@@ -57,7 +70,7 @@ import java.io.IOException;
         }
 
         private String parseJwt(HttpServletRequest request) {
-            String jwt = jwtUtils.getJwtFromHeader(request);
+            String jwt = cookieUtils.getJwtFromCookies(request);
             logger.debug("AuthTokenFilter.java: {}", jwt);
             return jwt;
         }

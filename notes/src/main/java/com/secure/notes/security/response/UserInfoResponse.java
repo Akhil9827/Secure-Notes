@@ -4,6 +4,7 @@ package com.secure.notes.security.response;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -21,10 +22,11 @@ import java.util.List;
         private LocalDate accountExpiryDate;
         private boolean isTwoFactorEnabled;
         private List<String> roles;
+        private Instant lastLogin;
 
         public UserInfoResponse(Long id, String username, String email, boolean accountNonLocked, boolean accountNonExpired,
                                 boolean credentialsNonExpired, boolean enabled, LocalDate credentialsExpiryDate,
-                                LocalDate accountExpiryDate, boolean isTwoFactorEnabled, List<String> roles) {
+                                LocalDate accountExpiryDate, boolean isTwoFactorEnabled, List<String> roles,Instant lastLogin) {
             this.id = id;
             this.username = username;
             this.email = email;
@@ -36,6 +38,7 @@ import java.util.List;
             this.accountExpiryDate = accountExpiryDate;
             this.isTwoFactorEnabled = isTwoFactorEnabled;
             this.roles = roles;
+            this.lastLogin=lastLogin;
         }
     }
 
